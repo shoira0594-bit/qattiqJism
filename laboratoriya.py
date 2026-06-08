@@ -3,12 +3,13 @@ import os
 import cv2
 import sys
 import asyncio
+import numpy as np
 
 # Windows ulanish xatolarini oldini olish
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-st.set_page_config(page_title="Laboratoriya Ishi ", page_icon="🔬", layout="centered")
+st.set_page_config(page_title="Laboratoriya Ishi Tizimi", page_icon="🔬", layout="centered")
 
 # TO'LIQ SAVOLLAR, VARIANTLAR, MP3 YO'LLARI VA TO'G'RI JAVOB KALITLARI
 questions = [
@@ -51,7 +52,7 @@ questions = [
         "id": 6, 
         "text": "6. Laboratoriya ishida tajriba xatoligini kamaytirish va aniqroq natija olish uchun, qizdirilgan jismni qaynoq suvdan olgach kalorimetrga qanday o’tkazish kerak?", 
         "audio": "audio_files/savol_6.mp3",
-        "options": ["A) Sekin, 5 daqiqa kutib", "B) Iloji boricha tez va chaqqonlik bilan", "C) Suvini yaxshilab quritib keyin", "D) Muzlatib keyin"],
+        "options": ["A) Sekin, 5 daqiqa kutib", "B) Iloji boricha tez va chaqqonlik bilan", "C) Suvini yaxshilab quritibkeyin", "D) Muzlatib keyin"],
         "correct": "B) Iloji boricha tez va chaqqonlik bilan"
     },
     {
@@ -77,7 +78,7 @@ questions = [
     },
     {
         "id": 10, 
-        "text": "10. Kalorimetr ichidagi suv va unga tashlangan issiq jism o’rtasida issiqlik almashinuvi jarayoni qachongacha davom etadi?", 
+        "text": "10. Kalorimetr ichidagi suvga tashlangan issiq jism o’rtasida issiqlik almashinuvi jarayoni qachongacha davom etadi?", 
         "audio": "audio_files/savol_10.mp3",
         "options": ["A) Suv qaynab ketguncha", "B) Jism butunlay erib ketguncha", "C) Tizimda issiqlik muvozanati (temperaturalar tenglashguncha) qaror topguncha", "D) 10 daqiqa o'tguncha"],
         "correct": "C) Tizimda issiqlik muvozanati (temperaturalar tenglashguncha) qaror topguncha"
@@ -98,22 +99,23 @@ if not st.session_state.authenticated:
     familiya = st.text_input("Familiyangizni kiriting:")
     sinf = st.text_input("Sinfingizni kiriting:")
     
-    if st.button("📸 Face ID (Yuzni aniqlash va rasmga olish)", type="primary"):
+    st.write("📸 Shaxsingizni tasdiqlash uchun 'Take Photo' tugmasini bosing:")
+    
+    # Internet serverida xatosiz ishlaydigan tayyor brauzer kamerasi
+    img_file = st.camera_input("Face ID tekshiruvi")
+    
+    if img_file is not None:
         if ism and familiya and sinf:
-            cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-            try:
-                if cap.isOpened():
-                    ret, frame = cap.read()
-                    if ret:
-                        st.session_state.authenticated = True
-                        st.session_state.user_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        st.session_state.student_info = f"{ism} {familiya}, {sinf}-sinf"
-                        st.success("✅ Muvaffaqiyatli!")
-                        st.rerun()
-            finally:
-                cap.release()
+            bytes_data = img_file.getvalue()
+            cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            
+            st.session_state.authenticated = True
+            st.session_state.user_image = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+            st.session_state.student_info = f"{ism} {familiya}, {sinf}-sinf"
+            st.success("✅ Face ID muvaffaqiyatli yakunlandi!")
+            st.rerun()
         else:
-            st.warning("Iltimos, maydonlarni to'ldiring!")
+            st.warning("Iltimos, rasmdan oldin ism, familiya va sinfingizni to'ldiring!")
 
 # 2-BOSQICH: NAZORAT SAVOLLARI
 else:
@@ -128,37 +130,28 @@ else:
             
     st.markdown("---")
     
-    # Savollarni chiqarish
     for q in questions:
         st.markdown(f"### {q['text']}")
-        
-        # Audio pleyer
         if os.path.exists(q["audio"]):
             st.audio(q["audio"])
         else:
             st.warning(f"⚠️ Audio topilmadi: {q['audio']}")
         
-        # Javob variantlari
         if not st.session_state.submitted:
             st.radio("To'g'ri javobni belgilang:", q["options"], key=f"q_{q['id']}")
         else:
-            selected = st.session_state[f"q_{q['id']}"] if f"q_{q['id']}" in st.session_state else "Belgilanmagan"
+            selected = st.session_state.get(f"q_{q['id']}", "Belgilanmagan")
             st.write(f"Sizning javobingiz: **{selected}**")
-            
             if selected == q["correct"]:
                 st.success("🟢 Barakalla! To'g'ri javob berdingiz.")
             else:
                 st.error(f"🔴 Noto'g'ri. To'g'ri javob: **{q['correct']}**")
-                
         st.markdown("---")
         
-    # Yuborish tugmasi
     if not st.session_state.submitted:
         if st.button("Natijalarni yakunlash va yuborish", type="primary"):
             st.session_state.submitted = True
             st.rerun()
-            
-    # Umumiy ball paneli
     else:
         correct_count = 0
         for q in questions:
@@ -168,7 +161,6 @@ else:
                 
         st.sidebar.title("📊 Umumiy Natija")
         st.sidebar.metric(label="To'g'ri javoblar", value=f"{correct_count} / {len(questions)}")
-        
         foiz = (correct_count / len(questions)) * 100
         st.sidebar.metric(label="Ko'rsatkich", value=f"{int(foiz)}%")
         
