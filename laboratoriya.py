@@ -91,4 +91,82 @@ if "user_image" not in st.session_state:
 if "submitted" not in st.session_state:
     st.session_state.submitted = False
 
-# 1
+# 1-BOSQICH: RO'YXATDAN O'TISH
+if not st.session_state.authenticated:
+    st.title("🔬 Ro'yxatdan o'tish va Face ID")
+    ism = st.text_input("Ismingizni kiriting:")
+    familiya = st.text_input("Familiyangizni kiriting:")
+    sinf = st.text_input("Sinfingizni kiriting:")
+    
+    st.write("📸 Shaxsingizni tasdiqlash uchun 'Take Photo' tugmasini bosing:")
+    img_file = st.camera_input("Face ID tekshiruvi")
+    
+    if img_file is not None:
+        if ism and familiya and sinf:
+            bytes_data = img_file.getvalue()
+            cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+            
+            st.session_state.authenticated = True
+            st.session_state.user_image = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+            st.session_state.student_info = f"{ism} {familiya}, {sinf}-sinf"
+            st.success("✅ Face ID muvaffaqiyatli yakunlandi!")
+            st.rerun()
+        else:
+            st.warning("Iltimos, rasmdan oldin ism, familiya va sinfingizni to'ldiring!")
+
+# 2-BOSQICH: NAZORAT SAVOLLARI
+else:
+    st.title("📝 Laboratoriya Ishi: Nazorat Savollari")
+    
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.info(f"👤 O'quvchi: {st.session_state.student_info}")
+    with col2:
+        if st.session_state.user_image is not None:
+            st.image(st.session_state.user_image, caption="Face ID rasmi", use_container_width=True)
+            
+    st.markdown("---")
+    
+    for q in questions:
+        st.markdown(f"### {q['text']}")
+        if os.path.exists(q["audio"]):
+            st.audio(q["audio"])
+        else:
+            st.warning(f"⚠️ Audio topilmadi: {q['audio']}")
+        
+        if not st.session_state.submitted:
+            st.radio("To'g'ri javobni belgilang:", q["options"], key=f"q_{q['id']}")
+        else:
+            selected = st.session_state.get(f"q_{q['id']}", "Belgilanmagan")
+            st.write(f"Sizning javobingiz: **{selected}**")
+            if selected == q["correct"]:
+                st.success("🟢 Barakalla! To'g'ri javob berdingiz.")
+            else:
+                st.error(f"🔴 Noto'g'ri. To'g'ri javob: **{q['correct']}**")
+        st.markdown("---")
+        
+    if not st.session_state.submitted:
+        if st.button("Natijalarni yakunlash va yuborish", type="primary"):
+            st.session_state.submitted = True
+            st.rerun()
+    else:
+        correct_count = 0
+        for q in questions:
+            ans = st.session_state.get(f"q_{q['id']}", "")
+            if ans == q["correct"]:
+                correct_count += 1
+                
+        st.sidebar.title("📊 Umumiy Natija")
+        st.sidebar.metric(label="To'g'ri javoblar", value=f"{correct_count} / {len(questions)}")
+        foiz = (correct_count / len(questions)) * 100
+        st.sidebar.metric(label="Ko'rsatkich", value=f"{int(foiz)}%")
+        
+        if foiz >= 80:
+            st.sidebar.balloons()
+            st.sidebar.success("Ajoyib natija! 🌟")
+        else:
+            st.sidebar.warning("Yana biroz harakat qilish kerak! 📚")
+
+        if st.sidebar.button("Qaytadan urinish"):
+            st.session_state.submitted = False
+            st.rerun()
