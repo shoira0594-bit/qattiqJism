@@ -5,17 +5,16 @@ import sys
 import asyncio
 import numpy as np
 
-# Windows ulanish xatolarini oldini olish
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 st.set_page_config(page_title="Laboratoriya Ishi Tizimi", page_icon="🔬", layout="centered")
 
-# TO'LIQ SAVOLLAR, VARIANTLAR, MP3 YO'LLARI VA TO'G'RI JAVOB KALITLARI
+# SAVOLLAR RO'YXATI (AUDIOLAR PAPKASIZ, TO'G'RIDAN-TO'G'RI BOSH SAHIFADA)
 questions = [
     {
         "id": 1, 
-        "text": "1. Qattiq jismning solishtirma issiqlik sig’imini aniqlash laboratoriya ishida tashqi muhit bilan issiqlik almashinuvini kamaytirish uchun qaysi asbobdan foydalaniladi?", 
+        "text": "1. Qattiq jismning solishtirma issiqlik sig’imini anixlash laboratoriya ishida tashqi muhit bilan issiqlik almashinuvini kamaytirish uchun qaysi asbobdan foydalaniladi?", 
         "audio": "savol_1.mp3",
         "options": ["A) Voltmetr", "B) Kalorimetr", "C) Termometr", "D) Ampermetr"],
         "correct": "B) Kalorimetr"
@@ -52,7 +51,7 @@ questions = [
         "id": 6, 
         "text": "6. Laboratoriya ishida tajriba xatoligini kamaytirish va aniqroq natija olish uchun, qizdirilgan jismni qaynoq suvdan olgach kalorimetrga qanday o’tkazish kerak?", 
         "audio": "savol_6.mp3",
-        "options": ["A) Sekin, 5 daqiqa kutib", "B) Iloji boricha tez va chaqqonlik bilan", "C) Suvini yaxshilab quritibkeyin", "D) Muzlatib keyin"],
+        "options": ["A) Sekin, 5 daqiqa kutib", "B) Iloji boricha tez va chaqqonlik bilan", "C) Suvini yaxshilab quritib keyin", "D) Muzlatib keyin"],
         "correct": "B) Iloji boricha tez va chaqqonlik bilan"
     },
     {
@@ -78,7 +77,7 @@ questions = [
     },
     {
         "id": 10, 
-        "text": "10. Kalorimetr ichidagi suvga tashlangan issiq jism o’rtasida issiqlik almashinuvi jarayoni qachongacha davom etadi?", 
+        "text": "10. Kalorimetr ichidagi suv va unga tashlangan issiq jism o’rtasida issiqlik almashinuvi jarayoni qachongacha davom etadi?", 
         "audio": "savol_10.mp3",
         "options": ["A) Suv qaynab ketguncha", "B) Jism butunlay erib ketguncha", "C) Tizimda issiqlik muvozanati (temperaturalar tenglashguncha) qaror topguncha", "D) 10 daqiqa o'tguncha"],
         "correct": "C) Tizimda issiqlik muvozanati (temperaturalar tenglashguncha) qaror topguncha"
@@ -100,8 +99,6 @@ if not st.session_state.authenticated:
     sinf = st.text_input("Sinfingizni kiriting:")
     
     st.write("📸 Shaxsingizni tasdiqlash uchun 'Take Photo' tugmasini bosing:")
-    
-    # Internet serverida xatosiz ishlaydigan tayyor brauzer kamerasi
     img_file = st.camera_input("Face ID tekshiruvi")
     
     if img_file is not None:
